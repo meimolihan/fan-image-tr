@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark light">
+<title>fan-image-tr · 图片工坊</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/css/style.css?v=__ASSET_V__">
+</head>
+<body>
+<div id="app" class="app">
+
+  <header class="topbar">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5.5A2.5 2.5 0 0 1 5.5 3h13A2.5 2.5 0 0 1 21 5.5v13a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 18.5v-13Z" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="8.5" cy="8.5" r="1.8" fill="currentColor"/><path d="m3.6 17.4 4.6-4.2a2 2 0 0 1 2.7 0l3.1 2.8a2 2 0 0 0 2.7 0l3.1-2.8a2 2 0 0 1 2.6 0l1.9 1.7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <div class="brand-text">
+        <b>fan-image-tr</b>
+        <span id="verTag" class="muted xs">图片工坊</span>
+      </div>
+    </div>
+
+    <div class="topbar-actions">
+      <span id="hwBadge" class="badge" title="FFmpeg 能力"></span>
+      <button id="themeBtn" class="icon-btn" title="切换主题" aria-label="切换主题">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v2m0 14v2M5.6 5.6 7 7m10 10 1.4 1.4M3 12h2m14 0h2M5.6 18.4 7 17m10-10 1.4-1.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/><circle cx="12" cy="12" r="3.6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+      </button>
+      <button id="helpBtn" class="icon-btn" title="快捷键与说明" aria-label="帮助">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.4" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M9.7 9.4a2.4 2.4 0 0 1 4.6.8c0 1.6-2.3 1.9-2.3 3.3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="12" cy="16.6" r="1" fill="currentColor"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-view="browser" role="tab">浏览转换</button>
+    <button class="tab" data-view="queue" role="tab">任务队列 <span id="queueCount" class="pill hide">0</span></button>
+    <button class="tab" data-view="presets" role="tab">预设</button>
+  </nav>
+
+  <main class="main">
+
+    <!-- ================= 浏览器 ================= -->
+    <section class="view active" id="view-browser">
+      <div class="browser">
+        <aside class="sidebar">
+          <div class="crumbs" id="crumbs"></div>
+
+          <div class="side-actions">
+            <button id="upBtn" class="chip">上一级</button>
+            <button id="mkDirBtn" class="chip">新建目录</button>
+            <button id="uploadBtn" class="chip primary">上传</button>
+            <input id="uploadInput" type="file" accept="image/*" multiple hidden>
+          </div>
+
+          <div class="side-block">
+            <div class="side-title">已选 <span id="selCount" class="muted">0</span></div>
+            <div class="side-actions">
+              <button id="selAllBtn" class="chip">全选</button>
+              <button id="selNoneBtn" class="chip">清空</button>
+              <button id="selInvBtn" class="chip">反选</button>
+            </div>
+          </div>
+
+          <div class="side-block" id="selInfo" hidden>
+            <div class="side-title">选中图片</div>
+            <div id="selInfoBody" class="kv"></div>
+          </div>
+
+          <div class="side-block">
+            <div class="side-title">输出目录</div>
+            <code class="path" id="outDirLabel">—</code>
+          </div>
+        </aside>
+
+        <div class="grid-wrap">
+          <div class="toolbar">
+            <div class="search">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="m15.6 15.6 4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+              <input id="searchInput" type="search" placeholder="按文件名过滤…">
+            </div>
+            <label class="toggle"><input id="onlySelected" type="checkbox"> 只看已选</label>
+            <select id="sortSel" class="mini-select" title="排序">
+              <option value="name">按名称</option>
+              <option value="size_desc">按体积 ↓</option>
+              <option value="size_asc">按体积 ↑</option>
+              <option value="mtime_desc">按修改时间 ↓</option>
+            </select>
+            <div class="spacer"></div>
+            <button id="refreshBtn" class="chip" title="刷新">刷新</button>
+            <div class="viewmode">
+              <button class="chip active" data-grid="2">小</button>
+              <button class="chip" data-grid="3">中</button>
+              <button class="chip" data-grid="4">大</button>
+            </div>
+          </div>
+
+          <div id="grid" class="grid cols-3"></div>
+          <div id="empty" class="empty hide">
+            <p>这个目录里没有图片</p>
+            <p class="muted xs">点击右上角「上传」导入图片，或切换到其他目录</p>
+          </div>
+        </div>
+
+        <aside class="options" id="optionsPanel">
+          <div class="opt-head">
+            <h2>转换设置</h2>
+            <div class="opt-head-actions">
+              <button id="presetPickBtn" class="chip" title="应用预设">预设 ▾</button>
+            </div>
+          </div>
+
+          <div class="opt-scroll">
+            <div class="field">
+              <label for="formatSel">输出格式</label>
+              <select id="formatSel"></select>
+              <p class="hint" id="formatHint"></p>
+            </div>
+
+            <div class="field" id="qualityField">
+              <label for="qualityRange"><span id="qualityLabelText">质量</span> <output id="qualityOut"></output></label>
+              <input id="qualityRange" type="range" min="1" max="100" step="1">
+              <p class="hint" id="qualityHint"></p>
+            </div>
+
+            <div class="field" id="chromaField">
+              <label for="chromaSel">色度抽样</label>
+              <select id="chromaSel"></select>
+              <p class="hint" id="chromaHint"></p>
+            </div>
+
+            <div class="field">
+              <label for="colorModeSel">色彩</label>
+              <select id="colorModeSel"></select>
+            </div>
+
+            <div class="field" id="bgField">
+              <label for="bgSel">透明区域背景色</label>
+              <div class="bg-row">
+                <select id="bgSel">
+                  <option value="white">白色</option>
+                  <option value="black">黑色</option>
+                  <option value="gray">灰色</option>
+                  <option value="transparent">保持透明</option>
+                  <option value="custom">自定义颜色…</option>
+                </select>
+                <input id="bgColor" type="color" value="#ffffff" hidden>
+              </div>
+              <p class="hint">输出格式不支持透明通道时，透明像素会用该颜色填充</p>
+            </div>
+
+            <div class="field">
+              <label for="resizeSel">缩放</label>
+              <select id="resizeSel"></select>
+            </div>
+
+            <div class="field" id="sizeField" hidden>
+              <label for="sizeInput" id="sizeLabel">长边</label>
+              <input id="sizeInput" type="number" min="1" max="20000" step="1">
+            </div>
+
+            <div class="field" id="customField" hidden>
+              <label>精确尺寸</label>
+              <div class="row2">
+                <input id="customW" type="number" min="1" max="20000" placeholder="宽">
+                <span class="times">×</span>
+                <input id="customH" type="number" min="1" max="20000" placeholder="高">
+              </div>
+            </div>
+
+            <div class="field" id="adaptField" hidden>
+              <label for="adaptSel">缩放方式</label>
+              <select id="adaptSel"></select>
+              <p class="hint" id="adaptHint"></p>
+            </div>
+
+            <div class="field">
+              <label for="accelSel">硬件加速</label>
+              <select id="accelSel"></select>
+              <p class="hint" id="accelHint"></p>
+            </div>
+
+            <details class="group">
+              <summary>旋转与翻转</summary>
+              <div class="group-body">
+                <div class="field">
+                  <label for="rotateSel">旋转</label>
+                  <select id="rotateSel"></select>
+                </div>
+                <div class="row2">
+                  <label class="toggle"><input id="autoOrient" type="checkbox" checked> 按 EXIF 自动摆正</label>
+                </div>
+                <div class="row2">
+                  <label class="toggle"><input id="flipH" type="checkbox"> 水平翻转</label>
+                  <label class="toggle"><input id="flipV" type="checkbox"> 垂直翻转</label>
+                </div>
+              </div>
+            </details>
+
+            <details class="group">
+              <summary>画质调整</summary>
+              <div class="group-body">
+                <div class="field">
+                  <label for="sharpenRange">锐化 <output id="sharpenOut">0</output></label>
+                  <input id="sharpenRange" type="range" min="0" max="100" step="1" value="0">
+                </div>
+                <div class="field">
+                  <label for="blurRange">模糊 <output id="blurOut">0</output></label>
+                  <input id="blurRange" type="range" min="0" max="100" step="1" value="0">
+                </div>
+                <div class="field">
+                  <label for="brightnessRange">亮度 <output id="brightnessOut">0</output></label>
+                  <input id="brightnessRange" type="range" min="-100" max="100" step="1" value="0">
+                </div>
+                <div class="field">
+                  <label for="contrastRange">对比度 <output id="contrastOut">0</output></label>
+                  <input id="contrastRange" type="range" min="-100" max="100" step="1" value="0">
+                </div>
+                <div class="field">
+                  <label for="saturationRange">饱和度 <output id="saturationOut">0</output></label>
+                  <input id="saturationRange" type="range" min="-100" max="100" step="1" value="0">
+                </div>
+                <p class="hint">0 表示不做处理；亮度/对比度/饱和度为相对增减</p>
+              </div>
+            </details>
+
+            <details class="group" id="wmGroup">
+              <summary>水印</summary>
+              <div class="group-body">
+                <label class="toggle"><input id="wmEnabled" type="checkbox"> 叠加水印图片</label>
+                <div id="wmBody" class="wm-body">
+                  <div class="field">
+                    <label for="wmPath">水印图片</label>
+                    <input id="wmPath" type="text" placeholder="图片路径，留空则不叠加">
+                    <p class="hint">支持绝对路径或相对浏览根目录的路径</p>
+                  </div>
+                  <div class="field">
+                    <label for="wmPos">位置</label>
+                    <select id="wmPos"></select>
+                  </div>
+                  <div class="row2">
+                    <div class="field">
+                      <label for="wmMargin">边距 px</label>
+                      <input id="wmMargin" type="number" min="0" max="2000" value="16">
+                    </div>
+                    <div class="field">
+                      <label for="wmWidth">宽度 px</label>
+                      <input id="wmWidth" type="number" min="0" max="4000" value="0">
+                    </div>
+                  </div>
+                  <div class="field">
+                    <label for="wmOpacity">不透明度 <output id="wmOpacityOut">80</output></label>
+                    <input id="wmOpacity" type="range" min="1" max="100" step="1" value="80">
+                  </div>
+                </div>
+              </div>
+            </details>
+
+            <details class="group">
+              <summary>其它</summary>
+              <div class="group-body">
+                <label class="toggle"><input id="stripMeta" type="checkbox" checked> 移除元数据（EXIF/ICC）</label>
+                <label class="toggle"><input id="allowUpscale" type="checkbox"> 允许放大到超过原始尺寸</label>
+                <label class="toggle"><input id="animatedChk" type="checkbox"> 输出为动画（GIF/WebP/APNG）</label>
+                <p class="hint">取消勾选时只处理第一帧</p>
+              </div>
+            </details>
+
+            <div class="est-box" id="estBox" hidden>
+              <div class="est-row"><span>预计输出</span><b id="estSize">—</b></div>
+              <div class="est-row"><span>预计尺寸</span><b id="estDim">—</b></div>
+              <div class="est-row"><span>原图体积</span><b id="estSrc">—</b></div>
+            </div>
+          </div>
+
+          <div class="opt-foot">
+            <button id="previewBtn" class="chip" title="查看将要执行的 ffmpeg 命令">查看命令</button>
+            <button id="convertBtn" class="btn primary grow">开始转换</button>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ================= 队列 ================= -->
+    <section class="view" id="view-queue">
+      <div class="queue-head">
+        <div class="stats" id="statsBar"></div>
+        <div class="spacer"></div>
+        <label class="toggle"><input id="autoRefresh" type="checkbox" checked> 自动刷新</label>
+        <select id="filterSel" class="mini-select">
+          <option value="all">全部</option>
+          <option value="running">进行中</option>
+          <option value="queued">排队中</option>
+          <option value="completed">已完成</option>
+          <option value="failed">失败</option>
+          <option value="cancelled">已取消</option>
+        </select>
+        <button id="clearBtn" class="chip danger">清理记录</button>
+      </div>
+      <div id="taskList" class="task-list"></div>
+      <div id="queueEmpty" class="empty">
+        <p>还没有转换任务</p>
+        <p class="muted xs">在「浏览转换」里选中图片后开始转换</p>
+      </div>
+    </section>
+
+    <!-- ================= 预设 ================= -->
+    <section class="view" id="view-presets">
+      <div class="presets-head">
+        <h2>转换预设</h2>
+        <p class="muted xs">预设保存的是「浏览转换」右侧的全部参数，点击即可套用</p>
+        <div class="spacer"></div>
+        <button id="savePresetBtn" class="btn primary">保存当前设置为预设</button>
+      </div>
+      <div id="presetGrid" class="preset-grid"></div>
+    </section>
+  </main>
+
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+
+  <!-- 预览器 -->
+  <div id="viewer" class="modal" hidden>
+    <div class="modal-card viewer-card">
+      <div class="viewer-head">
+        <b id="viewerName">—</b>
+        <div class="spacer"></div>
+        <button id="viewerPrev" class="icon-btn" title="上一张">‹</button>
+        <button id="viewerNext" class="icon-btn" title="下一张">›</button>
+        <a id="viewerDownload" class="chip" download>下载</a>
+        <button id="viewerClose" class="icon-btn" title="关闭">✕</button>
+      </div>
+      <div class="viewer-body" id="viewerBody">
+        <img id="viewerImg" alt="">
+      </div>
+      <div class="viewer-foot" id="viewerMeta"></div>
+    </div>
+  </div>
+
+  <!-- 通用弹窗 -->
+  <div id="dialog" class="modal" hidden>
+    <div class="modal-card sm">
+      <h3 id="dlgTitle">标题</h3>
+      <div id="dlgBody"></div>
+      <div class="dlg-actions">
+        <button id="dlgCancel" class="chip">取消</button>
+        <button id="dlgOk" class="btn primary">确定</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="/js/app.js?v=__ASSET_V__"></script>
+</body>
+</html>

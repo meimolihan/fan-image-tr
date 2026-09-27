@@ -1,0 +1,27 @@
+# Go
+*.exe
+*.test
+*.out
+
+# 构建产物
+/dist/
+/bin/
+
+# 数据与本地配置文件
+/data/
+/config.yaml
+*.conf
+
+# 前端（内嵌，无需独立产物）
+/internal/embedded/web/dist/
+
+# IDE / 系统
+.idea/
+.vscode/
+.DS_Store
+*.swp
+*.log
+
+# 环境变量本地覆盖
+.env
+.env.local

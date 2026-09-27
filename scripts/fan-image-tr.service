@@ -1,0 +1,53 @@
+[Unit]
+Description=fan-image-tr 图片处理服务
+Documentation=https://github.com/meimolihan/fan-image-tr
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=fit
+Group=fit
+WorkingDirectory=/var/lib/fan-image-tr
+
+# 监听地址与目录：按需修改
+Environment=FIT_APP_PORT=8791
+Environment=FIT_APP_DATA_DIR=/var/lib/fan-image-tr
+Environment=FIT_APP_MEDIA_DIR=/srv/photos
+Environment=FIT_APP_WORKER=2
+Environment=FIT_FFMPEG_ACCEL=auto
+# EnvironmentFile=-/etc/fan-image-tr/fan-image-tr.env
+
+ExecStart=/usr/local/bin/fan-image-tr
+# 不提供 ExecReload：服务不支持热重载配置，reload 请走 restart
+
+# 进程管理：异常退出自动重启，正常退出不重启
+Restart=on-failure
+RestartSec=3s
+KillSignal=SIGTERM
+TimeoutStopSec=20s
+
+# 日志交给 journald
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=fan-image-tr
+
+# ===== 基础加固 =====
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=false
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+# 允许写入数据目录与浏览根目录
+ReadWritePaths=/var/lib/fan-image-tr /srv/photos
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,25 @@
+# ===== 构建产物 =====
+/bin/
+/dist/
+*.exe
+*.test
+*.out
+
+# ===== 本地数据与配置 =====
+/data/
+/config.yaml
+*.local.yaml
+
+# ===== 运行日志 =====
+*.log
+logs/
+
+# ===== IDE / 系统 =====
+.idea/
+.vscode/
+.DS_Store
+*.swp
+
+# ===== 环境变量 =====
+.env
+.env.local

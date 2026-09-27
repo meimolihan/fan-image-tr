@@ -1,0 +1,30 @@
+services:
+  fan-image-tr:
+    build:
+      context: .
+      args:
+        VERSION: ${FIT_VERSION:-dev}
+    image: fan-image-tr:${FIT_VERSION:-latest}
+    container_name: fan-image-tr
+    restart: unless-stopped
+    ports:
+      - "${FIT_PORT:-8791}:8791"
+    environment:
+      # 时区：日志与文件时间按本地时间展示
+      TZ: ${TZ:-Asia/Shanghai}
+      # 转换并发；QSV/NVENC 等硬编码流水线建议不超过显卡并行能力
+      FIT_APP_WORKER: ${FIT_APP_WORKER:-2}
+      # 硬件加速后端：auto / qsv / nvenc / vaapi / none
+      FIT_FFMPEG_ACCEL: ${FIT_FFMPEG_ACCEL:-auto}
+      FIT_APP_DEBUG: ${FIT_APP_DEBUG:-false}
+    volumes:
+      # 数据目录：任务快照、预设、上传、产物
+      - ./data:/data
+      # 图片浏览根目录：只读挂载可避免误改原图
+      - ./photos:/photos:ro
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8791/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
