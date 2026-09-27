@@ -6,7 +6,7 @@ import (
 )
 
 // Version 由发布构建通过 -ldflags 注入；本地未注入时使用默认值。
-var Version = "0.0.3"
+var Version = "0.0.4"
 
 // Commit 源码提交号，由发布构建注入，本地未注入时为 unknown。
 var Commit = "unknown"
