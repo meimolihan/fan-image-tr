@@ -190,7 +190,13 @@ git fetch origin
 LOCAL_HASH=$(git rev-parse @)
 REMOTE_HASH=$(git rev-parse @{u} 2>/dev/null || echo "")
 if [ -n "${REMOTE_HASH}" ] && [ "${LOCAL_HASH}" != "${REMOTE_HASH}" ]; then
-    error "本地 main 与远端不一致，请先 git pull"
+    # 本地领先远端是正常的（待推送）；只有远端领先或分叉才需要先 pull
+    BEHIND=$(git rev-list --count "HEAD..@{u}" 2>/dev/null || echo 0)
+    AHEAD=$(git rev-list --count "@{u}..HEAD" 2>/dev/null || echo 0)
+    if [ "${BEHIND}" -gt 0 ]; then
+        error "远端有 ${BEHIND} 个本地没有的提交（本地领先 ${AHEAD}），请先 git pull --rebase 后再发布"
+    fi
+    info "本地领先远端 ${AHEAD} 个提交，发布时一并推送"
 fi
 
 # ===================== 更新 internal/version/version.go 版本号 =====================
