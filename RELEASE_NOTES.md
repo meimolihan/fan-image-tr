@@ -1,6 +1,6 @@
-# fan-image-tr v0.0.1
+# fan-image-tr v0.0.2
 
-第一个测试版
+接入 RELEASE_NOTES.md 发版说明；升级 checkout/setup-go 到 v6
 
 ## 下载
 ```bash
@@ -10,5 +10,4 @@ chmod +x fan-image-tr
 ```
 
 ## 变更
-- 1fd721c fix: 允许本地领先远端时发布，仅在远端领先或分叉时报错
-- dceb583 chore: add build-and-push.sh release script
+- 080a52e ci: 发版说明接入 RELEASE_NOTES.md；升级 checkout/setup-go 到 v6 修复 Node 20 弃用告警
