@@ -1,6 +1,6 @@
-# fan-image-tr v0.0.2
+# fan-image-tr v0.0.3
 
-接入 RELEASE_NOTES.md 发版说明；升级 checkout/setup-go 到 v6
+升级 build-push-action v7、setup-buildx-action v4、action-gh-release v3，清除全部 Node 20 弃用告警
 
 ## 下载
 ```bash
@@ -10,4 +10,4 @@ chmod +x fan-image-tr
 ```
 
 ## 变更
-- 080a52e ci: 发版说明接入 RELEASE_NOTES.md；升级 checkout/setup-go 到 v6 修复 Node 20 弃用告警
+- a6a6bf6 ci: build-push-action v7 / setup-buildx v4 / gh-release v3 清除 Node 20 弃用告警
