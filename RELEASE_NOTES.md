@@ -1,6 +1,6 @@
-# fan-image-tr v0.0.4
+# fan-image-tr v0.0.5
 
-固定 ubuntu-24.04；改用固定版本静态 FFmpeg 8.1.3（sha256 校验），消除 Ubuntu 26 迁移告警
+日常更新
 
 ## 下载
 ```bash
@@ -10,4 +10,4 @@ chmod +x fan-image-tr
 ```
 
 ## 变更
-- a31efad ci: 固定 ubuntu-24.04 并改用固定版本静态 FFmpeg(8.1.3, sha256 校验)，消除 Ubuntu 26 迁移告警
+
