@@ -14,11 +14,12 @@ permissions:
 env:
   GO_VERSION: '1.25'
   # 固定版本静态 FFmpeg：与 runner 镜像解耦，ubuntu-latest 迁移或 apt 仓库变动均不影响自检结果
-  # 来源 BtbN/FFmpeg-Builds（GitHub 托管，tag 不可变），sha256 已与 GitHub API digest 交叉校验
-  FFMPEG_BUILD: 'autobuild-2026-09-26-13-03'
-  FFMPEG_ASSET: 'ffmpeg-n8.1.3-linux64-gpl-8.1.tar.xz'
-  FFMPEG_DIR: 'ffmpeg-n8.1.3-linux64-gpl-8.1'
-  FFMPEG_SHA256: 'add729675e76163d04ba7e5b7e09c2439a20f66a4eaa23994b20d63f8ad75cb7'
+  # 来源 BtbN/FFmpeg-Builds（GitHub 托管），sha256 已与 GitHub API digest 交叉校验
+  # 注意：BtbN 仅保留约两周的 autobuild，固定标签会过期（404）；升级时同步更新五项
+  FFMPEG_BUILD: 'autobuild-2026-10-19-13-06'
+  FFMPEG_ASSET: 'ffmpeg-n8.1.3-18-g46d899d7a0-linux64-gpl-8.1.tar.xz'
+  FFMPEG_DIR: 'ffmpeg-n8.1.3-18-g46d899d7a0-linux64-gpl-8.1'
+  FFMPEG_SHA256: 'cc546852e535193e6d30a1f18cb90daa84e8ff320ceac6c6f5b514a1fba67079'
 
 jobs:
   test:
