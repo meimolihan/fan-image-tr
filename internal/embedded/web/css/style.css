@@ -334,6 +334,12 @@ input[type="color"] { width: 40px; height: 32px; padding: 2px; cursor: pointer; 
 .dlg-actions { display: flex; justify-content: flex-end; gap: 8px; }
 #dlgBody { display: flex; flex-direction: column; gap: 10px; font-size: 13px; }
 #dlgBody .cmd { max-height: 260px; }
+#dlgBody .dlg-rich { color: var(--text-dim); }
+#dlgBody .dlg-rich code {
+  font-family: var(--mono); font-size: 11.5px; padding: 1px 5px; border-radius: 5px;
+  background: var(--panel-2); border: 1px solid var(--line); color: var(--text);
+}
+#dlgBody .dlg-rich b { color: var(--text); }
 
 .viewer-card { max-width: 1080px; height: 88vh; }
 .viewer-head { display: flex; align-items: center; gap: 8px; padding: 11px 14px; border-bottom: 1px solid var(--line); }

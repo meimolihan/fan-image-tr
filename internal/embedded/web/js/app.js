@@ -80,14 +80,24 @@ function debounce(fn, ms) {
 }
 
 /* 通用弹窗：prompt / confirm / 只读展示 */
-function dialog({ title, body, okText = '确定', cancelText = '取消', hideCancel = false }) {
+function dialog({ title, body, okText = '确定', cancelText = '取消', hideCancel = false, html = false }) {
   return new Promise(resolve => {
     const modal = $('#dialog');
     $('#dlgTitle').textContent = title;
     const host = $('#dlgBody');
     host.innerHTML = '';
     if (typeof body === 'string') {
-      host.innerHTML = `<div class="cmd">${esc(body)}</div>`;
+      const wrap = document.createElement('div');
+      if (html) {
+        // 可信静态标记：按 HTML 渲染（调用方对插值变量已做 esc()），使用普通排版而非等宽命令样式
+        wrap.className = 'dlg-rich';
+        wrap.innerHTML = body;
+      } else {
+        // 纯文本：转义后放入等宽命令样式容器（适用于 ffmpeg 命令等）
+        wrap.className = 'cmd';
+        wrap.textContent = body;
+      }
+      host.appendChild(wrap);
     } else if (body) {
       host.appendChild(body);
     }
@@ -641,7 +651,7 @@ async function cardAction(act, f) {
       toast('已重命名为 ' + v.name, 'ok');
       loadDir(state.cwd);
     } else if (act === 'delete') {
-      const ok = await dialog({ title: '删除确认', body: `确定要删除 <b>${esc(f.name)}</b> 吗？此操作不可恢复。`, okText: '删除' });
+      const ok = await dialog({ title: '删除确认', html: true, body: `确定要删除 <b>${esc(f.name)}</b> 吗？此操作不可恢复。`, okText: '删除' });
       if (!ok) return;
       await api('/api/media/delete', { method: 'POST', body: JSON.stringify({ path: f.path }) });
       toast('已删除 ' + f.name, 'ok');
@@ -910,7 +920,7 @@ function renderPresets(list) {
       del.className = 'chip danger';
       del.textContent = '删除';
       del.onclick = async () => {
-        const ok = await dialog({ title: '删除预设', body: `确定删除预设 <b>${esc(p.name)}</b>？`, okText: '删除' });
+        const ok = await dialog({ title: '删除预设', html: true, body: `确定删除预设 <b>${esc(p.name)}</b>？`, okText: '删除' });
         if (!ok) return;
         try { await api('/api/presets/' + encodeURIComponent(p.name), { method: 'DELETE' }); loadPresets(); }
         catch (e) { toast('删除失败：' + e.message, 'err'); }
@@ -1177,6 +1187,7 @@ async function showHelp() {
     title: '使用说明',
     hideCancel: true,
     okText: '知道了',
+    html: true,
     body: `<div style="font-size:12.5px;line-height:1.8">
       <b>选择图片</b>：单击卡片选中，Shift/⌘ 单击可多选，右键打开更多操作，双击直接预览。<br>
       <b>批量转换</b>：选中后点右下角「开始转换」，或在浏览器视图按 <code>Enter</code>。<br>

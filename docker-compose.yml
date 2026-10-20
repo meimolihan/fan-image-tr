@@ -4,7 +4,7 @@ services:
       context: .
       args:
         VERSION: ${FIT_VERSION:-dev}
-    image: fan-image-tr:${FIT_VERSION:-latest}
+    image: mobufan/fan-image-tr:${FIT_VERSION:-latest}
     container_name: fan-image-tr
     restart: unless-stopped
     ports:
