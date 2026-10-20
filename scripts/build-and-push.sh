@@ -1,11 +1,11 @@
 #!/bin/bash
 #
-# fan-image-tr - 发布脚本（推送 tag 触发 GitHub Actions 自动构建与发版）
+# fan-image-tr - 发布脚本（触发 GitHub Actions 自动构建）
 # 不在本地编译任何产物：仅同步版本号、推送代码并打 v 开头 tag。
-# 推送后由 .github/workflows/ci.yml 的 release job 交叉编译并创建 Release：
-#   test    -> gofmt / go vet / 单元测试 / 竞态检测 / 编译 / FFmpeg 能力自检
-#   docker  -> buildx 构建镜像 + 冒烟测试（健康检查）
-#   release -> 交叉编译 linux/darwin/windows amd64+arm64 并上传 Release 附件
+# 打 tag 后显式调用 gh workflow run 触发发布流水线 release.yml：
+#   build-binaries -> publish-release -> build-docker -> sync-cnb
+#   （amd64/arm64 自包含二进制 + sha256 创建 GitHub Release，并推送 multi-arch 镜像）
+# 日常 push / tag 由 ci.yml 负责常规检查，不再承担发布。
 #
 # Usage:
 #   TAG(必填) 形如 v0.0.1; --yes 免交互; -m "备注" 可选发版说明
@@ -42,7 +42,7 @@ get_gh_run_info() {
     local run_json=""
     local sha=""
     while (( tries < max_tries )); do
-        run_json=$(gh run list --workflow=ci.yml --limit 1 --branch "${tag}" \
+        run_json=$(gh run list --workflow=release.yml --limit 1 --branch "${tag}" \
             --json status,conclusion,displayTitle,headBranch,event,databaseId,startedAt,headSha 2>/dev/null) || run_json=""
         if [[ -n "$run_json" && "$run_json" != "[]" ]]; then
             sha=$(echo "$run_json" | jq -r '.[0].headSha')
@@ -90,7 +90,7 @@ beautify_gh_run() {
     if [[ -z "$json_data" || "$json_data" == "[]" ]]; then
         echo -e "${gl_hong}[错误] 未获取到本次(${tag})流水线运行记录${reset}"
         echo -e "${gl_bai}可能原因：GitHub Actions 尚未注册该 run，可稍后用以下命令手动查看：${reset}"
-        echo -e "${gl_lv}gh run list --workflow=ci.yml --branch ${tag}${reset}"
+        echo -e "${gl_lv}gh run list --workflow=release.yml --branch ${tag}${reset}"
         echo -e "${gl_bufan}————————————————————————————————————————————————${gl_bai}"
         return 1
     fi
@@ -224,11 +224,30 @@ info "写入发版备注 RELEASE_NOTES.md"
     printf '%s\n' "${MSG}"
     printf '\n'
   fi
-  printf '## 下载\n'
+  printf '## 下载（二进制）\n'
   printf '```bash\n'
-  printf '# 二进制（linux amd64 / arm64）\n'
-  printf 'curl -fsSL -o fan-image-tr "https://github.com/meimolihan/fan-image-tr/releases/latest/download/fan-image-tr-linux-%s"\n' "$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')"
+  printf 'curl -fsSL -o fan-image-tr "https://github.com/meimolihan/fan-image-tr/releases/latest/download/fan-image-tr_linux_%s"\n' "$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')"
   printf 'chmod +x fan-image-tr\n'
+  printf '```\n'
+  printf '\n'
+  printf '## Docker 安装\n'
+  printf '```bash\n'
+  printf 'docker pull mobufan/fan-image-tr:latest\n'
+  printf 'docker run -d --name fan-image-tr -p 8791:8791 -v /var/lib/fan-image-tr:/data mobufan/fan-image-tr:%s\n' "${TAG}"
+  printf '```\n'
+  printf '\n'
+  printf '```bash\n'
+  printf 'docker pull ghcr.io/meimolihan/fan-image-tr:%s\n' "${TAG}"
+  printf '```\n'
+  printf '\n'
+  printf '## 二进制安装\n'
+  printf '```bash\n'
+  printf 'bash -c "$(curl -sSL https://raw.githubusercontent.com/meimolihan/fan-image-tr/main/scripts/install.sh)" -p 8791\n'
+  printf '```\n'
+  printf '\n'
+  printf '## 二进制卸载\n'
+  printf '```bash\n'
+  printf 'bash -c "$(curl -sSL https://raw.githubusercontent.com/meimolihan/fan-image-tr/main/scripts/uninstall.sh)" -y\n'
   printf '```\n'
   printf '\n'
   printf '## 变更\n'
@@ -253,23 +272,33 @@ if git rev-parse -q --verify "refs/tags/${TAG}" >/dev/null; then
 fi
 info "打 tag ${TAG}"
 git tag -a "${TAG}" -m "${TAG}"
-info "推送 tag ${TAG}（触发 ci.yml: test -> docker -> release）"
+info "推送 tag ${TAG}（触发 ci.yml 常规检查）"
 git push origin "refs/tags/${TAG}"
+
+# ===================== 触发 GitHub Actions 发布流水线 =====================
+info "触发 GitHub Actions 发布流水线 (release.yml, tag=${TAG})"
+if ! command -v gh >/dev/null 2>&1; then
+    warn "未安装 gh CLI，无法自动触发发布流水线。"
+    warn "请手动运行: gh workflow run release.yml -f tag=${TAG}"
+    exit 0
+fi
+if ! gh workflow run release.yml -f tag="${TAG}" >/dev/null 2>&1; then
+    warn "gh workflow run 触发失败，请检查："
+    warn "  1. 已执行过 gh auth login 且 token 含 workflow 权限"
+    warn "  2. 远端已推送 tag ${TAG}"
+    warn "  可手动触发: gh workflow run release.yml -f tag=${TAG}"
+    exit 1
+fi
+info "已触发发布流水线，tag=${TAG}"
 
 # ===================== 跟踪 GitHub Actions 流水线 =====================
 info "等待 GitHub Actions 注册本次流水线 ..."
-if ! command -v gh >/dev/null 2>&1; then
-    warn "未安装 gh CLI，无法自动跟踪流水线。"
-    warn "请手动查看: https://github.com/meimolihan/fan-image-tr/actions"
-    exit 0
-fi
-
 if ! beautify_gh_run "${TAG}"; then
     warn "未能自动获取流水线信息，但 tag ${TAG} 已推送成功。"
-    warn "请手动查看: gh run list --workflow=ci.yml --branch ${TAG}"
+    warn "请手动查看: gh run list --workflow=release.yml --branch ${TAG}"
     exit 0
 fi
 
 info "查看发布结果: gh release view ${TAG}"
-echo -e "${gl_bai}远程安装命令（systemd）：${gl_lv}bash <(curl -sL gitee.com/meimolihan/cmdbox/raw/master/sh/fan-image-tr_menu.sh)${gl_bai}"
+echo -e "${gl_bai}远程安装命令（systemd）：${gl_lv}bash -c \"\$(curl -sSL https://raw.githubusercontent.com/meimolihan/fan-image-tr/main/scripts/install.sh)\" -p 8791 -d /var/lib/fan-image-tr${gl_bai}"
 echo -e "${gl_bai}远程安装命令（Compose）：${gl_lv}bash <(curl -sL gitee.com/meimolihan/cmdbox/raw/master/sh/dc_inst_fan-image-tr.sh) 8791 /vol1/1000/compose/fan-image-tr${gl_bai}"

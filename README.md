@@ -1,14 +1,54 @@
+<div align="center">
+
 # fan-image-tr
 
-基于 FFmpeg 的图片批量处理 Web 工具。单文件二进制 + 内嵌前端，丢到任意一台装了 FFmpeg 的机器上就能用。
+_✨ 基于 FFmpeg 的图片批量处理 Web 工具（单文件二进制 + 内嵌前端）✨_
 
-- **格式多样**：JPEG / PNG / WebP / AVIF / GIF / HEIC / JPEG 2000 / TIFF / BMP / QOI，按当前 FFmpeg 实际编译情况逐个自检后展示
-- **硬件加速**：自动探测 QSV / NVENC / VAAPI，**逐格式实测**可用编码器，而不是看编码器在不在
-- **批量队列**：多选提交、进度与阶段、取消、重试、断电后任务快照可恢复
-- **预设管理**：内置预设 + 自定义预设，存本地 JSON
-- **一套参数多种规格**：通过 API 的 `variants` 一次生成缩略图 / 列表图 / 大图（界面暂未提供入口）
-- **可预览**：提交前看体积预估与**真实 FFmpeg 命令行**，参数不对劲能立刻发现
-- **无 Node 依赖**：前端直接嵌进 Go 二进制
+</div>
+
+<p align="center">
+  <a href="https://github.com/meimolihan/fan-image-tr/releases/latest">
+    <img src="https://img.shields.io/github/v/release/meimolihan/fan-image-tr?color=brightgreen" alt="release">
+  </a>
+  <a href="https://github.com/meimolihan/fan-image-tr/actions">
+    <img src="https://img.shields.io/github/actions/workflow/status/meimolihan/fan-image-tr/release.yml?branch=main" alt="release status">
+  </a>
+  <a href="https://hub.docker.com/repository/docker/mobufan/fan-image-tr">
+    <img src="https://img.shields.io/docker/pulls/mobufan/fan-image-tr?color=brightgreen" alt="docker pull">
+  </a>
+  <a href="https://github.com/meimolihan/fan-image-tr/releases/latest">
+    <img src="https://img.shields.io/github/downloads/meimolihan/fan-image-tr/total?color=brightgreen&include_prereleases" alt="downloads">
+  </a>
+</p>
+
+<p align="center">
+  <a href="#功能">功能</a>
+  ·
+  <a href="#快速开始">快速开始</a>
+  ·
+  <a href="#项目部署">项目部署</a>
+  ·
+  <a href="#管理命令">管理命令</a>
+  ·
+  <a href="#配置">配置</a>
+  ·
+  <a href="#http-api">HTTP API</a>
+  ·
+  <a href="#硬件加速说明">硬件加速说明</a>
+  ·
+  <a href="#开发">开发</a>
+</p>
+
+## 功能
+
++ [x] 基于 FFmpeg 的**图片批量处理**，单文件二进制 + 内嵌前端，装了 FFmpeg 就能用
++ [x] **格式多样**：JPEG / PNG / WebP / AVIF / GIF / HEIC / JPEG 2000 / TIFF / BMP / QOI，按当前 FFmpeg 实际编译情况逐个自检后展示
++ [x] **硬件加速**：自动探测 QSV / NVENC / VAAPI，**逐格式实测**可用编码器，而不是看编码器在不在
++ [x] **批量队列**：多选提交、进度与阶段、取消、重试、断电后任务快照可恢复
++ [x] **预设管理**：内置预设 + 自定义预设，存本地 JSON
++ [x] **一套参数多种规格**：通过 API 的 `variants` 一次生成缩略图 / 列表图 / 大图（界面暂未提供入口）
++ [x] **可预览**：提交前看体积预估与**真实 FFmpeg 命令行**，参数不对劲能立刻发现
++ [x] **无 Node 依赖**：前端直接嵌进 Go 二进制
 
 ## 快速开始
 
@@ -25,19 +65,27 @@ make build            # 或 go build -o bin/fan-image-tr .
 
 浏览器打开 <http://127.0.0.1:8791>。
 
-## 安装
+## 项目部署
 
-### 二进制
-
-```bash
-git clone https://github.com/meimolihan/fan-image-tr.git
-cd fan-image-tr
-make build-all         # 交叉编译到 dist/
-```
-
-或从 Releases 下载对应平台的产物，解压即用。
+默认端口：**8791**；默认安装目录：**/var/lib/fan-image-tr**。
 
 **依赖**：Go 1.25+（编译）、FFmpeg 8+（运行，需 `ffmpeg` 与 `ffprobe`）。
+
+### 一键脚本安装（systemd，推荐）
+
+```bash
+# 交互式安装
+bash scripts/install.sh
+
+# 参数静默安装（端口 / 安装目录 / 图片浏览根目录）
+bash scripts/install.sh -p 8791 -d /var/lib/fan-image-tr -s /volume1/photo -y
+
+# curl | bash 远程安装
+bash -c "$(curl -sSL https://raw.githubusercontent.com/meimolihan/fan-image-tr/main/scripts/install.sh)" -p 8791 -d /var/lib/fan-image-tr
+```
+
+安装脚本会：检测/安装 FFmpeg → 落地二进制到 `${INSTALL_DIR}/fan-image-tr` → 建立 `/usr/local/bin/fan-image-tr` 软链 →
+写安装记录 `/etc/fan-image-tr.conf` → 生成并启动 `fan-image-tr.service`（无 systemd 环境回退后台运行）。
 
 ### Docker
 
@@ -49,7 +97,14 @@ docker run -d --name fit -p 8791:8791 \
   -v ./data:/data -v ./photos:/photos:ro fan-image-tr
 ```
 
-### systemd
+多架构镜像（linux/amd64 + linux/arm64）：
+
+```bash
+docker pull mobufan/fan-image-tr:latest
+docker pull ghcr.io/meimolihan/fan-image-tr:latest
+```
+
+### systemd（手动）
 
 ```bash
 sudo useradd -r -s /sbin/nologin fit
@@ -62,6 +117,37 @@ journalctl -u fan-image-tr -f
 ```
 
 按需修改 unit 里的 `FIT_APP_MEDIA_DIR`、`User` 与 `ReadWritePaths`。
+
+### 二进制
+
+```bash
+git clone https://github.com/meimolihan/fan-image-tr.git
+cd fan-image-tr
+make release           # 本地构建发布产物到 dist/（linux amd64 + arm64 + sha256）
+```
+
+或从 [Releases](https://github.com/meimolihan/fan-image-tr/releases/latest) 下载对应平台的产物（`fan-image-tr_linux_amd64` / `fan-image-tr_linux_arm64`），解压即用。
+
+## 管理命令
+
+二进制内置 systemd / 进程管理子命令（需 root 权限）：
+
+```bash
+fan-image-tr status                       # 查看运行方式、PID、端口、访问地址、运行时长、内存、健康检查
+fan-image-tr start | stop | restart        # 启动 / 停止 / 重启服务（systemd 优先，其次直接管理进程）
+fan-image-tr check                         # 检查 FFmpeg 环境与格式 / 硬件加速能力
+fan-image-tr uninstall -y                  # 免确认卸载，保留数据目录
+fan-image-tr uninstall -y --purge          # 免确认卸载，并删除数据目录
+fan-image-tr version | help                # 版本 / 帮助
+```
+
+系统级安装也可用脚本卸载：
+
+```bash
+bash scripts/uninstall.sh                  # 交互式（数据目录默认保留）
+bash scripts/uninstall.sh -y               # 免确认
+bash scripts/uninstall.sh -y --purge       # 同时删除数据目录
+```
 
 ## 配置
 
@@ -94,6 +180,8 @@ data/
 ├── uploads/       上传的文件
 └── output/        转换产物
 ```
+
+安装记录文件 `/etc/fan-image-tr.conf` 由 `install.sh` 生成，记录 `INSTALL_DIR` / `BIN_PATH` / `PORT` / `DATA_DIR` / `MEDIA_DIR`。
 
 ## HTTP API
 
@@ -174,12 +262,29 @@ make fmt       # 格式化
 make test      # go vet + go test
 make race      # 竞态检测
 make cover     # 覆盖率报告
+make check     # FFmpeg 能力自检
+make release   # 本地构建发布产物（dist/）
 make docker    # 构建镜像
+make push TAG=v0.0.1   # 发版并触发 GitHub Actions
 ```
 
 前端源码在 `internal/embedded/web/`，改完直接 `make build` 重新内嵌即可（无需 Node 构建）。
 
 测试需要 FFmpeg 与 `ffprobe`；`go test ./...` 会跑真实转码用例。
+
+### 工程结构
+
+```
+.github/workflows/
+├── ci.yml          常规检查（tag 触发）：单元测试 + FFmpeg 自检 + 镜像冒烟
+└── release.yml     发布流水线（workflow_dispatch）：build-binaries → publish-release → build-docker → sync-cnb
+
+scripts/
+├── install.sh      系统级安装（systemd / 后台运行）
+├── uninstall.sh    系统级卸载
+├── build-release.sh 本地构建发布产物（dist/）
+└── build-and-push.sh 发版（bump 版本 → 打 tag → 触发 release.yml）
+```
 
 ## 许可
 

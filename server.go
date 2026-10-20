@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 
@@ -25,25 +26,49 @@ import (
 
 // run 解析命令并执行。
 func run(args []string) error {
-	if len(args) > 0 {
+	// 兼容 flag 形式：仅首参为选项时按全局标志处理
+	// （避免 "uninstall -h" 等子命令自身的 -h 被误判为全局帮助）
+	if len(args) > 0 && strings.HasPrefix(args[0], "-") {
 		switch args[0] {
-		case "help", "-h", "--help":
-			printUsage(os.Stdout)
+		case "-version", "-v", "--version":
+			printVersion()
 			return nil
-		case "version", "-v", "--version":
-			fmt.Println("fan-image-tr", version.Long())
+		case "-h", "--help":
+			printHelp()
+			return nil
+		}
+	}
+
+	if len(args) > 0 && !strings.HasPrefix(args[0], "-") {
+		sub, rest := args[0], args[1:]
+		switch sub {
+		case "help":
+			printHelp()
+			return nil
+		case "version":
+			printVersion()
 			return nil
 		case "check":
-			return runCheck(args[1:])
+			return runCheck(rest)
 		case "status":
-			return runStatus(args[1:])
+			return runStatus()
+		case "uninstall":
+			return runUninstall(rest)
+		case "start", "stop", "restart":
+			return runService(sub)
+		case "backup":
+			fmt.Fprintln(os.Stderr, "提示: 备份请直接归档数据目录（app.data_dir）。")
+			return nil
+		case "restore":
+			fmt.Fprintln(os.Stderr, "提示: 恢复请将备份解压回数据目录后重启服务。")
+			return nil
 		case "serve", "start-web":
-			args = args[1:]
+			args = rest
 		default:
-			if len(args[0]) > 0 && args[0][0] == '-' {
-				break // 以 - 开头的当作启动选项
-			}
-			return fmt.Errorf("未知命令: %s（运行 fan-image-tr help 查看用法）", args[0])
+			errPrint("未知命令:", sub)
+			fmt.Println()
+			commandUsage()
+			return fmt.Errorf("未知命令: %s", sub)
 		}
 	}
 	return runServer(args)
@@ -295,8 +320,11 @@ func printUsage(w io.Writer) {
 
 命令:
   （无命令）        启动 Web 服务
-  check             检查 FFmpeg 环境，输出格式与硬件加速能力
   status            查看本机服务运行状态
+  start|stop|restart 启动 / 停止 / 重启服务（systemd 优先）
+  uninstall        停止服务并移除安装（数据目录默认保留）
+  check             检查 FFmpeg 环境，输出格式与硬件加速能力
+  backup|restore    备份 / 恢复数据目录操作说明
   version, -v       打印版本号
   help, -h          显示本帮助
 

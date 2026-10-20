@@ -6,11 +6,14 @@
 //
 // 命令：
 //
-//	（无命令）      启动 Web 服务
-//	check           检查 FFmpeg 环境并输出格式 / 硬件加速能力
-//	status          查看本机服务运行状态
-//	version / -v    打印版本号
-//	help / -h       显示帮助
+//	（无命令）        启动 Web 服务
+//	status            查看本机服务运行状态
+//	start/stop/restart 启动 / 停止 / 重启服务
+//	uninstall         停止服务并移除安装
+//	check             检查 FFmpeg 环境并输出格式 / 硬件加速能力
+//	backup / restore  备份 / 恢复数据目录操作说明
+//	version / -v      打印版本号
+//	help / -h         显示帮助
 //
 // 启动选项：
 //
