@@ -1,12 +1,31 @@
-# fan-image-tr v0.0.6
+# fan-image-tr v0.0.7
 
-帮我写
+你帮我写
 
-## 下载
+## 下载（二进制）
 ```bash
-# 二进制（linux amd64 / arm64）
-curl -fsSL -o fan-image-tr "https://github.com/meimolihan/fan-image-tr/releases/latest/download/fan-image-tr-linux-amd64"
+curl -fsSL -o fan-image-tr "https://github.com/meimolihan/fan-image-tr/releases/latest/download/fan-image-tr_linux_amd64"
 chmod +x fan-image-tr
+```
+
+## Docker 安装
+```bash
+docker pull mobufan/fan-image-tr:latest
+docker run -d --name fan-image-tr -p 8791:8791 -v /var/lib/fan-image-tr:/data mobufan/fan-image-tr:v0.0.7
+```
+
+```bash
+docker pull ghcr.io/meimolihan/fan-image-tr:v0.0.7
+```
+
+## 二进制安装
+```bash
+bash -c "$(curl -sSL https://raw.githubusercontent.com/meimolihan/fan-image-tr/main/scripts/install.sh)" -p 8791
+```
+
+## 二进制卸载
+```bash
+bash -c "$(curl -sSL https://raw.githubusercontent.com/meimolihan/fan-image-tr/main/scripts/uninstall.sh)" -y
 ```
 
 ## 变更
