@@ -20,6 +20,9 @@ env:
   FFMPEG_ASSET: 'ffmpeg-n8.1.3-18-g46d899d7a0-linux64-gpl-8.1.tar.xz'
   FFMPEG_DIR: 'ffmpeg-n8.1.3-18-g46d899d7a0-linux64-gpl-8.1'
   FFMPEG_SHA256: 'cc546852e535193e6d30a1f18cb90daa84e8ff320ceac6c6f5b514a1fba67079'
+  # 镜像仓库目标
+  DOCKERHUB_IMAGE: mobufan/fan-image-tr
+  GHCR_IMAGE: ghcr.io/meimolihan/fan-image-tr
 
 jobs:
   test:
@@ -105,6 +108,59 @@ jobs:
           docker logs fit
           docker rm -f fit
           exit 1
+
+  # 推送镜像到 Docker Hub 与 GHCR：仅在打 tag 时执行，避免 main 分支提交覆盖 latest
+  publish:
+    name: 推送镜像
+    runs-on: ubuntu-24.04
+    needs: [test, docker]
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute image tags
+        id: tags
+        run: |
+          TAG="${GITHUB_REF_NAME}"          # 例如 v0.0.5
+          VER="${TAG#v}"                    # 例如 0.0.5
+          TAGS="${DOCKERHUB_IMAGE}:${TAG},${DOCKERHUB_IMAGE}:${VER},${DOCKERHUB_IMAGE}:latest"
+          TAGS="${TAGS},${GHCR_IMAGE}:${TAG},${GHCR_IMAGE}:${VER},${GHCR_IMAGE}:latest"
+          echo "tags=${TAGS}" >> "$GITHUB_OUTPUT"
+          echo "version=${VER}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.tags.outputs.tags }}
+          build-args: |
+            VERSION=${{ steps.tags.outputs.version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   release:
     name: 发布
