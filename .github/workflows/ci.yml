@@ -1,12 +1,12 @@
 name: CI
 
+# 常规开发检查：编译 + 静态检查 + 单元测试 + 镜像冒烟。
+# 由 push 到 main / PR 触发，不涉及任何发布产物（发布见 release.yml）。
 on:
-  # 仅推送 tag 时触发（由 scripts/build-and-push.sh 负责打 tag）；
-  # 日常 push 到 main / PR 不再触发工作流。
-  # 本工作流负责常规检查（测试 + 镜像冒烟），发布由 release.yml 承担。
   push:
-    tags: ['v*']
-  workflow_dispatch:
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 permissions:
   contents: read
@@ -76,7 +76,7 @@ jobs:
           /tmp/fan-image-tr uninstall -h >/dev/null
 
   docker:
-    name: 镜像构建
+    name: 镜像构建与冒烟
     runs-on: ubuntu-24.04
     needs: test
     steps:

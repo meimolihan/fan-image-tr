@@ -29,9 +29,9 @@ list_color_init() {
 }
 list_color_init
 
-# 拉取本次 tag 触发的 workflow run：tag push 后 Actions 尚未注册新 run，
+# 拉取本次 workflow_dispatch 触发的 release run：dispatch 后 Actions 尚未注册新 run，
 # 直接 --limit 1 取最新会取到上一次的陈旧记录。
-# 这里按 tag 过滤并轮询等待，且用 headSha 校验确实是本次 push 的 run。
+# 这里按 ref(tag) 过滤并轮询等待，且用 headSha 校验确实是本次的 run。
 get_gh_run_info() {
     local tag="$1"
     local expect_sha
@@ -272,7 +272,7 @@ if git rev-parse -q --verify "refs/tags/${TAG}" >/dev/null; then
 fi
 info "打 tag ${TAG}"
 git tag -a "${TAG}" -m "${TAG}"
-info "推送 tag ${TAG}（触发 ci.yml 常规检查）"
+info "推送 tag ${TAG}"
 git push origin "refs/tags/${TAG}"
 
 # ===================== 触发 GitHub Actions 发布流水线 =====================
