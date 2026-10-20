@@ -1,6 +1,6 @@
-# fan-image-tr v0.0.5
+# fan-image-tr v0.0.6
 
-xxx
+帮我写
 
 ## 下载
 ```bash
