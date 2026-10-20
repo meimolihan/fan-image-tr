@@ -2,11 +2,12 @@ name: Release Pipeline
 
 # 执行 scripts/build-and-push.sh <版本号>（自动调用 gh workflow run --ref <tag>）时触发：
 #   1) 常规检查（gofmt / go vet / 单元测试 / 竞态检测 / 编译 / FFmpeg 自检）
-#   2) Go 自包含二进制（linux/amd64 + arm64，内嵌前端），生成 sha256 并创建 GitHub Release
-#   3) 构建并推送 multi-arch Docker 镜像（Docker Hub + GHCR）
-#   4) 同步 Git 仓库与标签到 CNB 镜像仓库
-# 一次发版只产生一条 workflow run（jobs 链式：test -> build-binaries -> publish-release -> build-docker -> sync-cnb）。
-# 日常 push / PR 由 ci.yml 负责；打 tag 不再触发任何工作流。
+#   2) 镜像构建与冒烟（健康检查 + 能力自检）
+#   3) Go 自包含二进制（linux/amd64 + arm64，内嵌前端），生成 sha256 并创建 GitHub Release
+#   4) 构建并推送 multi-arch Docker 镜像（Docker Hub + GHCR）
+#   5) 同步 Git 仓库与标签到 CNB 镜像仓库
+# 一次发版只产生一条 workflow run（jobs 链式：test -> docker-smoke -> build-binaries -> publish-release -> build-docker -> sync-cnb）。
+# 本仓库仅保留此工作流：日常开发不触发，发版时一条记录到底。
 
 on:
   workflow_dispatch:
@@ -109,9 +110,51 @@ jobs:
           /tmp/fan-image-tr help >/dev/null
           /tmp/fan-image-tr uninstall -h >/dev/null
 
+  docker-smoke:
+    name: 镜像构建与冒烟测试
+    needs: test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ format('refs/tags/{0}', github.event.inputs.tag) }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: 构建镜像
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: false
+          load: true
+          tags: fan-image-tr:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: 冒烟测试
+        run: |
+          docker run -d --name fit -p 8791:8791 fan-image-tr:ci
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8791/api/health >/dev/null; then
+              echo "健康检查通过"
+              curl -fsS http://127.0.0.1:8791/api/health
+              docker exec fit /usr/local/bin/fan-image-tr check | head -30
+              docker rm -f fit
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "服务启动超时"
+          docker logs fit
+          docker rm -f fit
+          exit 1
+
   build-binaries:
     name: 编译二进制 (linux amd64 + arm64，内嵌前端)
-    needs: test
+    needs: docker-smoke
     runs-on: ubuntu-24.04
     timeout-minutes: 40
     outputs:
