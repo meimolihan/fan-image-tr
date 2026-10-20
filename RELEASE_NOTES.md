@@ -1,6 +1,6 @@
-# fan-image-tr v0.0.7
+# fan-image-tr v0.0.8
 
-你帮我写
+单一流水线：合并常规检查与镜像冒烟，消除 Node.js 20 弃用警告
 
 ## 下载（二进制）
 ```bash
@@ -11,11 +11,11 @@ chmod +x fan-image-tr
 ## Docker 安装
 ```bash
 docker pull mobufan/fan-image-tr:latest
-docker run -d --name fan-image-tr -p 8791:8791 -v /var/lib/fan-image-tr:/data mobufan/fan-image-tr:v0.0.7
+docker run -d --name fan-image-tr -p 8791:8791 -v /var/lib/fan-image-tr:/data mobufan/fan-image-tr:v0.0.8
 ```
 
 ```bash
-docker pull ghcr.io/meimolihan/fan-image-tr:v0.0.7
+docker pull ghcr.io/meimolihan/fan-image-tr:v0.0.8
 ```
 
 ## 二进制安装
