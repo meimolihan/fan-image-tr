@@ -1,11 +1,10 @@
 name: CI
 
 on:
+  # 仅推送 tag 时触发（由 scripts/build-and-push.sh 负责打 tag）；
+  # 日常 push 到 main / PR 不再触发工作流
   push:
-    branches: [main, master]
     tags: ['v*']
-  pull_request:
-    branches: [main, master]
   workflow_dispatch:
 
 permissions:
