@@ -282,7 +282,7 @@ if ! command -v gh >/dev/null 2>&1; then
     warn "请手动运行: gh workflow run release.yml -f tag=${TAG}"
     exit 0
 fi
-if ! gh workflow run release.yml -f tag="${TAG}" >/dev/null 2>&1; then
+if ! gh workflow run release.yml -f tag="${TAG}" --ref "${TAG}" >/dev/null 2>&1; then
     warn "gh workflow run 触发失败，请检查："
     warn "  1. 已执行过 gh auth login 且 token 含 workflow 权限"
     warn "  2. 远端已推送 tag ${TAG}"
