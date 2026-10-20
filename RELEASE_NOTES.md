@@ -1,6 +1,6 @@
 # fan-image-tr v0.0.5
 
-日常更新
+xxx
 
 ## 下载
 ```bash
